@@ -10,20 +10,20 @@ import shutil
 
 doc = """
 Usage:
-    postgres.py clean_db [-d]
-    postgres.py clean_fs [-d]
-    postgres.py clean_all [-d]
-    postgres.py clean_dumps [-d]
+    postgres.py clean_db [--true-run]
+    postgres.py clean_fs [--true-run]
+    postgres.py clean_all [--true-run]
+    postgres.py clean_dumps [--true-run]
 
 Options:
-    -d, --dry-run    dry run
+    --true-run    disable dry run
 """
 DB_POSGRES = ['template0', 'template1', 'postgres', 'vmail']
 DB_NO_CLEAN = DB_POSGRES + ['odoo-mock%']
 
-STABLES = ['9.0', '10.0', '11.0', '12.0']
+STABLES = ['11.0', '12.0', '13.0']
 SAAS_INCLUDE = ['saas-[0-9]{2}.[0-2]?']
-SAAS_EXCLUDE = ['saas-[1][1-2].[3-9]']
+SAAS_EXCLUDE = ['saas-[1][3].[3-9]']
 
 
 DIRS_TO_CLEAN = {
@@ -125,10 +125,9 @@ class Commands(object):
 
 def main():
     opt = docopt(doc)
-    dry_run = False
-    if opt.get('--dry-run'):
+    dry_run = not opt.get('--true-run', False)
+    if dry_run:
         pprint('DRYRUN')
-        dry_run = True
     commands = Commands(dry_run)
 
     if opt.get('clean_db'):
