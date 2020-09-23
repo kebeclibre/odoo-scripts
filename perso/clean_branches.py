@@ -18,7 +18,7 @@ from docopt import docopt
 currentDir = os.getcwd()
 gitDir = os.path.join(currentDir, '.git')
 
-gitOutput = re.compile('(?P<starred>\*)*([\s\t])*(?P<branchName>([\w._]+-?)*)')
+gitOutput = re.compile('(?P<starred>\*)*([\s\t])*(?P<branchName>([\w._/]+-*)*)')
 
 
 _branchKeep = [
