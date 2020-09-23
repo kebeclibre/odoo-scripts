@@ -1,0 +1,52 @@
+#!/bin/bash
+repo=0
+branch="11.0"
+enterprise=0
+pull=true
+
+while getopts r:b:e:c option
+do
+    case "${option}" in
+        r) repo=${OPTARG};;
+        b) branch=${OPTARG};;
+        e) enterprise=${OPTARG};;
+        c) pull=false;;
+    esac
+done
+
+odoo_path=$DEVEL_PATH/distr${repo}
+
+gc() {
+
+    comm_branch=$branch
+    ent_branch=$enterprise
+    if [[ $enterprise=0 ]]; then
+        ent_branch=$comm_branch
+    fi    
+    prev_dir=$PWD
+    
+    cd $odoo_path/odoo
+    git checkout $comm_branch
+    if [ "$pull" = true ]; then
+        git pull
+    fi
+    git clean -df
+    
+    cd $odoo_path/enterprise
+    git checkout $ent_branch
+    if [ "$pull" = true ]; then
+        git pull
+    fi
+    git clean -df
+    cd $prev_dir
+
+    cd $odoo_path/design-themes
+    git checkout $comm_branch
+    if [ "$pull" = true ]; then
+        git pull
+    fi
+    git clean -df
+    cd $prev_dir
+}
+
+gc $@

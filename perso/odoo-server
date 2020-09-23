@@ -1,0 +1,79 @@
+#!/bin/bash
+
+repo=0
+db=0
+shell=""
+options=""
+log="--log-level=info"
+help=false
+posbox=false
+enterprise=true
+
+while getopts sr:d:o:l:hpc option
+do
+    case "${option}" in
+        r) repo=${OPTARG};;
+        d) db=${OPTARG};;
+        s) shell=" shell ";;
+        o) options=${OPTARG};;
+        l) log_options=${OPTARG};;
+        h) help=true;;
+        p) posbox=true;;
+        c) enterprise=false;;
+    esac
+done
+
+shift $((OPTIND-1))
+
+odoo_path=$DEVEL_PATH/distr${repo}
+
+odoo-server() {
+    case "${log_options}" in
+        e) log="--log-level=error";;
+    esac
+
+    port=$((8069 + 1000*$repo))
+
+    odoo_exec="odoo-bin"
+    if [ ! -f "${odoo_path}/odoo/${odoo_exec}" ]; then
+        odoo_exec=odoo.py
+    fi
+    args=""
+
+    if [ "$help" = true ] ; then
+        $odoo_path/odoo/${odoo_exec} --help
+    fi
+    if [[ $db = 0 && "$posbox" = false ]]; then
+        exit 1
+    fi
+    db_name="${db}"
+    enterprise_addons="${odoo_path}/enterprise,${odoo_path}/design-themes,"
+    if [[ "$enterprise" = false ]]; then
+        enterprise_addons=""
+    fi
+
+    args+=${shell}
+    args+="-d $db_name "
+    #args+="--test-enable "
+    args+="--db-filter=$db_name "
+    #args+="--addons-path=$COMMUNITY,$OCA/account-financial-tools/,$OCA/reporting-engine/,$OCA/server-tools/,$OCA/account-financial-reporting/ --log-handler=werkzeug:ERROR"
+    #args+="--addons-path=$COMMUNITY --log-level=info"
+    #args+="--addons-path=$ENTERPRISE,$COMMUNITY,$SAAS,$THEMES --log-handler=werkzeug:ERROR"
+    #$SAAS
+    args+="--addons-path=${enterprise_addons}${odoo_path}/odoo/addons"
+    #,$DEVEL_PATH/bigleaf/11"
+    #args+="--addons-path=${odoo_path}/odoo/addons,${odoo_path}/design-themes ${log}"
+    args+=" --xmlrpc-port=${port}"
+    args+=" ${options}"
+    args+=" ${log}"
+    args+=" --limit-time-real=9999999999 --limit-time-cpu=9999999999"
+    #args+="--addons-path=$COMMUNITY --log-level=error"
+    if [ "$posbox" = true ] ; then
+        args="--load=web,hw_proxy,hw_escpos,hw_posbox_homepage,hw_drivers --xmlrpc-port=${port}"
+    fi
+
+
+    $odoo_path/odoo/${odoo_exec} ${args}
+}
+
+odoo-server
