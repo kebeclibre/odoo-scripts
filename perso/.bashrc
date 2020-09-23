@@ -1,32 +1,17 @@
-#export PYTHONPATH=$PYTHONPATH:/home/odoo/devel/odoo/openerp
-
 shopt -s expand_aliases
 export DEVEL_PATH=/home/odoo/devel
 
-export ODOO_PATH=$DEVEL_PATH/odoo
-
-PATH=$PATH:$ODOO_PATH:/opt:$DEVEL_PATH/support-tools
-
-ODOO_ENT_PATH=$DEVEL_PATH/enterprise
+PATH=$PATH:$ODOO_PATH:/opt:$DEVEL_PATH/scripts/perso
 
 ODOO_CUSTOM=$DEVEL_PATH/custom
 
-PYTHONSTARTUP=~/.pythonrc
 export PYTHONPATH="$DEVEL_PATH/scripts/perso"
 
-export THEMES=$DEVEL_PATH/design-themes
-
 export INTERNAL=$DEVEL_PATH/internal
-
-export COMMUNITY=$ODOO_PATH/addons
-
-export ENTERPRISE=$ODOO_ENT_PATH
 
 export SAAS=$INTERNAL/default,$INTERNAL/trial
 
 export PRIVATE=$INTERNAL/private
-
-export OCA=$DEVEL_PATH/oca
 
 alias posdd="sudo dd bs=4M status=progress"
 
