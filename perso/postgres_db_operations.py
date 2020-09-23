@@ -21,7 +21,7 @@ Options:
 DB_POSGRES = ['template0', 'template1', 'postgres', 'vmail']
 DB_NO_CLEAN = DB_POSGRES + ['odoo-mock%']
 
-STABLES = ['11.0', '12.0', '13.0']
+STABLES = ['12.0', '13.0']
 SAAS_INCLUDE = ['saas-[0-9]{2}.[0-2]?']
 SAAS_EXCLUDE = ['saas-[1][3].[3-9]']
 
