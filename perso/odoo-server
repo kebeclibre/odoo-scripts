@@ -49,6 +49,7 @@ odoo-server() {
     db_name="${db}"
     enterprise_addons="${odoo_path}/enterprise,${odoo_path}/design-themes,"
     if [[ "$enterprise" = false ]]; then
+        db_name="${db_name}--comm"
         enterprise_addons=""
     fi
 

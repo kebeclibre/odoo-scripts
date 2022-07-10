@@ -120,7 +120,10 @@ class Commands(object):
                 if self.dry_run:
                     pprint(to_delete)
                 else:
-                    shutil.rmtree(to_delete)
+                    if os.path.isfile(to_delete):
+                        os.remove(to_delete)
+                    else:
+                        shutil.rmtree(to_delete)
 
 
 def main():

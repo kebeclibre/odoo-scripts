@@ -1,0 +1,9 @@
+127.0.0.1	lpe.odoo-gr.com lpe localhost local.dev0 local.dev0.demo local.dev0.admin local.dev1 local.dev1.demo local.dev1.admin local.mailcatcher local.owl.tools local.owl local.owl.playground
+127.0.1.1	lpe
+
+# The following lines are desirable for IPv6 capable hosts
+::1     ip6-localhost ip6-loopback
+fe00::0 ip6-localnet
+ff00::0 ip6-mcastprefix
+ff02::1 ip6-allnodes
+ff02::2 ip6-allrouters
