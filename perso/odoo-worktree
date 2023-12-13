@@ -23,12 +23,12 @@ def get_main_repo_path(repo):
 
 def make_worktree(repo, version):
   repopath = get_main_repo_path(repo)
-  wt_path = get_version_absolute_path(version)
+  wt_path = get_version_absolute_path(version) + "/" + repo
   subprocess.run(["git", "-C", str(repopath), "worktree", "add", str(wt_path), version])
 
 def remove_worktree(repo, version):
   repopath = get_main_repo_path(repo)
-  wt_path = get_version_absolute_path(version)
+  wt_path = get_version_absolute_path(version) + "/" + repo
   subprocess.run(["git", "-C", str(repopath), "worktree", "remove", str(wt_path)])
 
 def remove_version_dir(version):
@@ -42,27 +42,28 @@ NUMBER_TO_PORT = {
 }
 
 def get_odoo_run_cmd(version, launch_args):
-  parser = argparse.ArgumentParser()
-  parser.add_argument("-p", "--port")
-  parser.add_argument("-s", "--shell", action="store_true")
-  parser.add_argument('remaining', nargs=argparse.REMAINDER)
-  args = parser.parse_args(launch_args)
+  own_args = []
+  if "--" in launch_args:
+    index = launch_args.index("--")
+    own_args = launch_args[:index]
+    launch_args = launch_args[index+1:]
 
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-p", "--port", required=False)
+  parser.add_argument("-s", "--shell", action="store_true", required=False)
+  args = parser.parse_args(own_args)
   odoo_cli = []
   if args.shell:
     odoo_cli.append("shell")
   odoo_cli.extend(["--addons-path=" + ",".join(["enterprise", "odoo/addons", "odoo/odoo/addons"])])
 
-  remaining = list(args.remaining)[1:]
-
-  if "-d" not in args.remaining:
+  if "-d" not in launch_args:
     odoo_cli.extend(["-d", version])
 
   if args.port:
     odoo_cli.append("--xmlrpc-port=" + str(NUMBER_TO_PORT[int(args.port)]))
 
-
-  cmd = [odoo_bin_path] + odoo_cli + remaining
+  cmd = [odoo_bin_path] + odoo_cli + launch_args
   return cmd
 
 if __name__ == "__main__":
@@ -82,10 +83,7 @@ if __name__ == "__main__":
 
   if args.operation == "run":
     odoo_cmd = get_odoo_run_cmd(args.version, list(args.remaining))
-    cd_cmd = ["cd", get_version_absolute_path(args.version), "&&"]
-
-    final_cmd = cd_cmd + odoo_cmd
-    print(" ".join(final_cmd))
+    print(" ".join(odoo_cmd))
 
   if args.operation == "path":
     print(get_version_absolute_path(args.version))
