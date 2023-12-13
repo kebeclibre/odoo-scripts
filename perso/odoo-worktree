@@ -35,6 +35,8 @@ def get_real_branch_name(version):
   if not saas and not minor:
     return major + ".0"
 
+  return version
+
 
 def get_version_absolute_path(version):
   wtrelative = worktreepath.format(version=version).split("/")
