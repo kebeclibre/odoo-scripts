@@ -17,7 +17,11 @@ odoo_bin_path = "odoo/odoo-bin"
 def get_real_branch_name(version):
   if version == "master":
     return version
-  if not version[:2] in ()
+
+  if version[:5] == "saas-":
+    return version
+
+  if version[:2] not in ("14", "15", "16", "17"):
     return version
 
   split = version.split(".")
