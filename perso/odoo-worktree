@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import argparse
 import os
+import sys
 from pathlib import Path
 import subprocess
+import re
 
 home = Path.home()
 
@@ -11,26 +13,28 @@ odooRepos = {
   "enterprise": "devel/distr0/enterprise"
 }
 
-worktreepath = "devel/worktrees/{version}"
+worktrees_root = "devel/worktrees"
+worktreepath = worktrees_root + "/{version}"
 odoo_bin_path = "odoo/odoo-bin"
 
+branch_re = re.compile("(saas-)?(\d\d)(.\d)?(.*)?")
+
 def get_real_branch_name(version):
-  if version == "master":
+  if version.startswith("master"):
     return version
 
-  if version[:5] == "saas-":
+  match = branch_re.match(version)
+  saas, major, minor, other = match.groups()
+
+  if other:
     return version
 
-  if version[:2] not in ("14", "15", "16", "17"):
-    return version
+  if not saas and minor and minor != ".0":
+    return "saas-" + major + minor
 
-  split = version.split(".")
-  if len(split) == 1:
-    return version + ".0"
-  if split[1] == "0":
-    return version
-  else:
-    return "saas-" + version
+  if not saas and not minor:
+    return major + ".0"
+
 
 def get_version_absolute_path(version):
   wtrelative = worktreepath.format(version=version).split("/")
@@ -99,10 +103,15 @@ def get_odoo_run_cmd(version, launch_args):
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Make worktree')
   parser.add_argument("operation")
-  parser.add_argument("version")
+  parser.add_argument("version", nargs="?", default="")
   parser.add_argument('remaining', nargs=argparse.REMAINDER)
 
   args = parser.parse_args()
+  if args.operation == "list":
+    dirs = os.scandir(str(home.joinpath(*worktrees_root.split("/"))))
+    print("\n".join([d.name for d in dirs]))
+    sys.exit(0)
+
   branch = get_real_branch_name(args.version)
 
   if args.operation == "add":
