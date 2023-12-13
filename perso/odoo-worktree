@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+import argparse
+import os
+from pathlib import Path
+import subprocess
+
+home = Path.home()
+
+odooRepos = {
+  "odoo": "devel/distr0/odoo",
+  "enterprise": "devel/distr0/enterprise"
+}
+
+worktreepath = "devel/worktrees/{version}"
+odoo_bin_path = "odoo/odoo-bin"
+
+def get_version_absolute_path(version):
+  wtrelative = worktreepath.format(version=version).split("/")
+  return str(home.joinpath(*wtrelative))
+
+def get_main_repo_path(repo):
+  return str(home.joinpath(*odooRepos[repo].split("/")))
+
+def make_worktree(repo, version):
+  repopath = get_main_repo_path(repo)
+  wt_path = get_version_absolute_path(version)
+  subprocess.run(["git", "-C", str(repopath), "worktree", "add", str(wt_path), version])
+
+def remove_worktree(repo, version):
+  repopath = get_main_repo_path(repo)
+  wt_path = get_version_absolute_path(version)
+  subprocess.run(["git", "-C", str(repopath), "worktree", "remove", str(wt_path)])
+
+def remove_version_dir(version):
+  wt_path = get_version_absolute_path(version)
+  os.rmdir(str(wt_path))
+
+
+NUMBER_TO_PORT = {
+  1: 8069,
+  2: 9069,
+}
+
+def get_odoo_run_cmd(version, launch_args):
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-p", "--port")
+  parser.add_argument("-s", "--shell", action="store_true")
+  parser.add_argument('remaining', nargs=argparse.REMAINDER)
+  args = parser.parse_args(launch_args)
+
+  odoo_cli = []
+  if args.shell:
+    odoo_cli.append("shell")
+  odoo_cli.extend(["--addons-path=" + ",".join(["enterprise", "odoo/addons", "odoo/odoo/addons"])])
+
+  remaining = list(args.remaining)[1:]
+
+  if "-d" not in args.remaining:
+    odoo_cli.extend(["-d", version])
+
+  if args.port:
+    odoo_cli.append("--xmlrpc-port=" + str(NUMBER_TO_PORT[int(args.port)]))
+
+
+  cmd = [odoo_bin_path] + odoo_cli + remaining
+  return cmd
+
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser(description='Make worktree')
+  parser.add_argument("operation")
+  parser.add_argument("version")
+  parser.add_argument('remaining', nargs=argparse.REMAINDER)
+
+  args = parser.parse_args()
+  if args.operation == "add":
+      for repo in odooRepos.keys():
+        make_worktree(repo, args.version)
+  if args.operation == "remove":
+      for repo in odooRepos.keys():
+        remove_worktree(repo, args.version)
+      remove_version_dir(args.version)
+
+  if args.operation == "run":
+    odoo_cmd = get_odoo_run_cmd(args.version, list(args.remaining))
+    cd_cmd = ["cd", get_version_absolute_path(args.version), "&&"]
+
+    final_cmd = cd_cmd + odoo_cmd
+    print(" ".join(final_cmd))
+
+  if args.operation == "path":
+    print(get_version_absolute_path(args.version))
