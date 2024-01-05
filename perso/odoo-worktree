@@ -77,56 +77,58 @@ NUMBER_TO_PORT = {
   2: 9069,
 }
 
-def get_odoo_run_cmd(version, launch_args):
-  own_args = []
-  if "--" in launch_args:
-    index = launch_args.index("--")
-    own_args = launch_args[:index]
-    launch_args = launch_args[index+1:]
+def _separate_remainings(args):
+  try:
+    index = args.index("--")
+  except ValueError:
+    return args, []
+  return args[:index-1], args[index+1:]
 
+def get_odoo_run_cmd(version, args):
   parser = argparse.ArgumentParser()
   parser.add_argument("-p", "--port", required=False)
   parser.add_argument("-s", "--shell", action="store_true", required=False)
-  args = parser.parse_args(own_args)
-  odoo_cli = []
-  if args.shell:
+  own, odoo_args = parser.parse_known_args(args)
+  odoo_args = [a for a in odoo_args if a != "--"]
+
+  odoo_cli = odoo_args
+  if own.shell:
     odoo_cli.append("shell")
   odoo_cli.extend(["--addons-path=" + ",".join(["enterprise", "odoo/addons", "odoo/odoo/addons"])])
 
-  if "-d" not in launch_args:
+  if "-d" not in odoo_args:
     odoo_cli.extend(["-d", version])
 
-  if args.port:
-    odoo_cli.append("--xmlrpc-port=" + str(NUMBER_TO_PORT[int(args.port)]))
+  if own.port:
+    odoo_cli.append("--xmlrpc-port=" + str(NUMBER_TO_PORT[int(own.port)]))
 
-  cmd = [odoo_bin_path] + odoo_cli + launch_args
+  cmd = [odoo_bin_path] + odoo_cli
   return cmd
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Make worktree')
   parser.add_argument("operation")
   parser.add_argument("version", nargs="?", default="")
-  parser.add_argument('remaining', nargs=argparse.REMAINDER)
+  own, additional = parser.parse_known_args()
 
-  args = parser.parse_args()
-  if args.operation == "list":
+  if own.operation == "list":
     dirs = os.scandir(str(home.joinpath(*worktrees_root.split("/"))))
     print("\n".join([d.name for d in dirs]))
     sys.exit(0)
 
-  branch = get_real_branch_name(args.version)
+  branch = get_real_branch_name(own.version)
 
-  if args.operation == "add":
+  if own.operation == "add":
       for repo in odooRepos.keys():
-        make_worktree(repo, branch, list(args.remaining))
-  if args.operation == "remove":
+        make_worktree(repo, branch, additional)
+  if own.operation == "remove":
       for repo in odooRepos.keys():
         remove_worktree(repo, branch)
       remove_version_dir(branch)
 
-  if args.operation == "run":
-    odoo_cmd = get_odoo_run_cmd(branch, list(args.remaining))
+  if own.operation == "run":
+    odoo_cmd = get_odoo_run_cmd(branch, additional)
     print(" ".join(odoo_cmd))
 
-  if args.operation == "path":
+  if own.operation == "path":
     print(get_version_absolute_path(branch))
