@@ -4,3 +4,4 @@ pwd="$PWD"
 cd "$(odoo-worktree path $@)"
 eval "$(odoo-worktree run $@)"
 cd $pwd
+reset

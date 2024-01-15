@@ -48,17 +48,16 @@ def get_main_repo_path(repo):
 def make_worktree(repo, base_branch, gitargs):
   repopath = get_main_repo_path(repo)
   gitparser = argparse.ArgumentParser()
-  gitparser.add_argument("-b", "-B")
-  gitparser.add_argument("remaining", nargs=argparse.REMAINDER)
-  args = gitparser.parse_args(gitargs)
+  gitparser.add_argument("-n", "--branch-name")
+  args = gitparser.parse_known_args(gitargs)
 
   wt_name = base_branch
-  if args.b:
-    wt_name = args.b
+  if args[0].branch_name:
+    wt_name = args[0].branch_name
 
   wt_path = get_version_absolute_path(wt_name) + "/" + repo
   cmd = ["git", "-C", str(repopath), "worktree", "add"]
-  cmd.extend(gitargs)
+  cmd.extend(args[1])
   cmd.extend([str(wt_path), base_branch])
   subprocess.run(cmd)
 
@@ -73,8 +72,8 @@ def remove_version_dir(version):
 
 
 NUMBER_TO_PORT = {
-  1: 8069,
-  2: 9069,
+  0: 8069,
+  1: 9069,
 }
 
 def _separate_remainings(args):
