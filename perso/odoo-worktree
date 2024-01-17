@@ -100,37 +100,12 @@ def get_odoo_run_cmd(version, args):
   cmd = [odoo_bin_path] + odoo_cli
   return cmd
 
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description='Make worktree')
-  parser.add_argument("operation")
-  own, additional = parser.parse_known_args()
-
-  operation = own.operation
-  if operation in ("add", "remove", "run", "path"):
-      parser = argparse.ArgumentParser()
-      parser.add_argument("version", nargs="?", default="")
-      own, additional = parser.parse_known_args(additional)
-      branch = get_real_branch_name(own.version)
-
-      if operation == "add":
-          for repo in odooRepos.keys():
-            make_worktree(repo, branch, additional)
-      if operation == "remove":
-          for repo in odooRepos.keys():
-            remove_worktree(repo, branch)
-          remove_version_dir(branch)
-
-      if operation == "run":
-        odoo_cmd = get_odoo_run_cmd(branch, additional)
-        print(" ".join(odoo_cmd))
-
-      if operation == "path":
-        print(get_version_absolute_path(branch))
-
-  if operation == "bashcomplete":
+def _bash_completion(*args):
     parser = argparse.ArgumentParser()
     parser.add_argument("command")
-    own, additional = parser.parse_known_args(additional)
+    own, additional = parser.parse_known_args(args)
+    if len(additional) >= 2:
+      return
     if own.command == "ocd":
       worktrees = _list_worktrees()
       if len(additional) == 1:
@@ -164,3 +139,33 @@ if __name__ == "__main__":
       if additional:
         worktrees = [w for w in worktrees if additional[0] in w]
       print(" ".join(worktrees))
+
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser(description='Make worktree')
+  parser.add_argument("operation")
+  own, additional = parser.parse_known_args()
+
+  operation = own.operation
+  if operation in ("add", "remove", "run", "path"):
+      parser = argparse.ArgumentParser()
+      parser.add_argument("version", nargs="?", default="")
+      own, additional = parser.parse_known_args(additional)
+      branch = get_real_branch_name(own.version)
+
+      if operation == "add":
+          for repo in odooRepos.keys():
+            make_worktree(repo, branch, additional)
+      if operation == "remove":
+          for repo in odooRepos.keys():
+            remove_worktree(repo, branch)
+          remove_version_dir(branch)
+
+      if operation == "run":
+        odoo_cmd = get_odoo_run_cmd(branch, additional)
+        print(" ".join(odoo_cmd))
+
+      if operation == "path":
+        print(get_version_absolute_path(branch))
+
+  if operation == "bashcomplete":
+    _bash_completion(*additional)
