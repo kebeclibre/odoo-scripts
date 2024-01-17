@@ -1,5 +1,0 @@
-#!/bin/bash
-
-newpath="$(odoo-worktree path $@)"
-cd $newpath
-$SHELL
