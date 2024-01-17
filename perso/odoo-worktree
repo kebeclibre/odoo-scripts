@@ -76,12 +76,8 @@ NUMBER_TO_PORT = {
   1: 9069,
 }
 
-def _separate_remainings(args):
-  try:
-    index = args.index("--")
-  except ValueError:
-    return args, []
-  return args[:index-1], args[index+1:]
+def _list_worktrees():
+  return os.listdir(home.joinpath(*worktrees_root.split("/")))
 
 def get_odoo_run_cmd(version, args):
   parser = argparse.ArgumentParser()
@@ -107,27 +103,64 @@ def get_odoo_run_cmd(version, args):
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description='Make worktree')
   parser.add_argument("operation")
-  parser.add_argument("version", nargs="?", default="")
   own, additional = parser.parse_known_args()
 
-  if own.operation == "list":
-    dirs = os.scandir(str(home.joinpath(*worktrees_root.split("/"))))
-    print("\n".join([d.name for d in dirs]))
-    sys.exit(0)
+  operation = own.operation
+  if operation in ("add", "remove", "run", "path"):
+      parser = argparse.ArgumentParser()
+      parser.add_argument("version", nargs="?", default="")
+      own, additional = parser.parse_known_args(additional)
+      branch = get_real_branch_name(own.version)
 
-  branch = get_real_branch_name(own.version)
+      if operation == "add":
+          for repo in odooRepos.keys():
+            make_worktree(repo, branch, additional)
+      if operation == "remove":
+          for repo in odooRepos.keys():
+            remove_worktree(repo, branch)
+          remove_version_dir(branch)
 
-  if own.operation == "add":
-      for repo in odooRepos.keys():
-        make_worktree(repo, branch, additional)
-  if own.operation == "remove":
-      for repo in odooRepos.keys():
-        remove_worktree(repo, branch)
-      remove_version_dir(branch)
+      if operation == "run":
+        odoo_cmd = get_odoo_run_cmd(branch, additional)
+        print(" ".join(odoo_cmd))
 
-  if own.operation == "run":
-    odoo_cmd = get_odoo_run_cmd(branch, additional)
-    print(" ".join(odoo_cmd))
+      if operation == "path":
+        print(get_version_absolute_path(branch))
 
-  if own.operation == "path":
-    print(get_version_absolute_path(branch))
+  if operation == "bashcomplete":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command")
+    own, additional = parser.parse_known_args(additional)
+    if own.command == "ocd":
+      worktrees = _list_worktrees()
+      if len(additional) == 1:
+          _path = additional[0]
+          path = _path.split("/")
+          wt_root = home.joinpath(*worktrees_root.split("/"))
+
+          if len(path) == 1 and path[0]:
+            worktrees = [w for w in worktrees if path[0] in w]
+            print(" ".join(worktrees))
+          elif len(path) > 1:
+            current_valid = path[:-1]
+            candidate = path[-1]
+            dirs = wt_root.joinpath(*current_valid)
+            candidate = dirs.joinpath(path[-1])
+            if candidate.is_dir():
+              dir_path = home.joinpath(candidate)
+              dirs = os.listdir(dir_path)
+              print(" ".join(dirs))
+            else:
+              candidates = [d for d in os.listdir(dirs) if path[-1] in d]
+              if len(candidates) == 1:
+                print('/'.join(current_valid + [candidates[0]]))
+              else:
+                print(" ".join(candidates))
+      else:
+        print(" ".join(worktrees))
+
+    if own.command == "orun":
+      worktrees = _list_worktrees()
+      if additional:
+        worktrees = [w for w in worktrees if additional[0] in w]
+      print(" ".join(worktrees))

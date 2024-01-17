@@ -35,6 +35,16 @@ function ocd() {
     cd "$(odoo-worktree path $@)"
 }
 
+function __complete_ocd() {
+    COMPREPLY=($(odoo-worktree bashcomplete $COMP_LINE));
+}
+complete -o nospace -S "/" -F __complete_ocd ocd
+
+function __complete_orun() {
+    COMPREPLY=($(odoo-worktree bashcomplete $COMP_LINE));
+}
+complete -o nospace -F __complete_orun orun
+
 function cdowl() {
         repo=0
         if [ ! -z $1 ]; then
