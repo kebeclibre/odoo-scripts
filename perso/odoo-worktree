@@ -74,6 +74,7 @@ def remove_version_dir(version):
 NUMBER_TO_PORT = {
   0: 8069,
   1: 9069,
+  2: 10069,
 }
 
 def _list_worktrees():
@@ -83,13 +84,20 @@ def get_odoo_run_cmd(version, args):
   parser = argparse.ArgumentParser()
   parser.add_argument("-p", "--port", required=False)
   parser.add_argument("-s", "--shell", action="store_true", required=False)
+  parser.add_argument("--addons-path-add", required=False)
   own, odoo_args = parser.parse_known_args(args)
   odoo_args = [a for a in odoo_args if a != "--"]
 
   odoo_cli = odoo_args
   if own.shell:
     odoo_cli.append("shell")
-  odoo_cli.extend(["--addons-path=" + ",".join(["enterprise", "odoo/addons", "odoo/odoo/addons"])])
+  addons_path = ["enterprise", "odoo/addons", "odoo/odoo/addons"]
+  for path in (own.addons_path_add or "").split(","):
+    if not path:
+      continue
+    if path not in addons_path:
+      addons_path.append(path)
+  odoo_cli.extend(["--addons-path=" + ",".join(addons_path)])
 
   if "-d" not in odoo_args:
     odoo_cli.extend(["-d", version])
@@ -106,12 +114,15 @@ def _bash_completion(*args):
     own, additional = parser.parse_known_args(args)
     if len(additional) >= 2:
       return
-    if own.command == "ocd":
+    if own.command in ("ocd", "osubl"):
       worktrees = _list_worktrees()
       if len(additional) == 1:
           _path = additional[0]
           path = _path.split("/")
           wt_root = home.joinpath(*worktrees_root.split("/"))
+
+          if len(path) > 1 and not wt_root.joinpath(path[0]).is_dir():
+            path[0] = get_real_branch_name(path[0])
 
           if len(path) == 1 and path[0]:
             worktrees = [w for w in worktrees if path[0] in w]
@@ -123,10 +134,10 @@ def _bash_completion(*args):
             candidate = dirs.joinpath(path[-1])
             if candidate.is_dir():
               dir_path = home.joinpath(candidate)
-              dirs = os.listdir(dir_path)
+              dirs = [d.name for d in os.scandir(dir_path) if d.is_dir()]
               print(" ".join(dirs))
             else:
-              candidates = [d for d in os.listdir(dirs) if path[-1] in d]
+              candidates = [d.name for d in os.scandir(dirs) if d.is_dir() and path[-1] in d.name]
               if len(candidates) == 1:
                 print('/'.join(current_valid + [candidates[0]]))
               else:

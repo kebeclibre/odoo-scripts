@@ -1,7 +1,19 @@
 #!/bin/bash
 
+args="$@"
+debug=false
+if [[ "$1" == "debug" ]]; then
+    args="${@:2}"
+    debug=true
+fi;
 pwd="$PWD"
-cd "$(odoo-worktree path $@)"
-eval "$(odoo-worktree run $@)"
+cd "$(odoo-worktree path $args)"
+
+cmd="$(odoo-worktree run $args)"
+if [ "$debug" = true ]; then
+    cmd="python3 -m debugpy --listen 5555 --wait-for-client ${cmd} --dev=reload"
+fi
+
+eval "$cmd"
 cd $pwd
-reset
+#reset

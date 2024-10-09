@@ -15,30 +15,18 @@ export PRIVATE=$INTERNAL/private
 
 alias posdd="sudo dd bs=4M status=progress"
 
-# function cdcomm() {
-# 	repo=0
-# 	if [ ! -z $1 ]; then 
-# 		repo=${1}
-# 	fi
-#     cd "$DEVEL_PATH/distr${repo}/odoo"
-# }
-
-# function cdent() {
-# 	repo=0
-# 	if [ ! -z $1 ]; then 
-# 		repo=${1}
-# 	fi
-#     cd "$DEVEL_PATH/distr${repo}/enterprise"
-# }
-
 function ocd() {
     cd "$(odoo-worktree path $@)"
+}
+function osubl() {
+    ocd $@ && $(subl ..)
 }
 
 function __complete_ocd() {
     COMPREPLY=($(odoo-worktree bashcomplete $COMP_LINE));
 }
 complete -o nospace -S "/" -F __complete_ocd ocd
+complete -o nospace -S "/" -F __complete_ocd osubl
 
 function __complete_orun() {
     COMPREPLY=($(odoo-worktree bashcomplete $COMP_LINE));
