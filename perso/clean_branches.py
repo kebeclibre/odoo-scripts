@@ -22,16 +22,18 @@ gitOutput = re.compile('(?P<starred>\*)*([\s\t])*(?P<branchName>([\w._/]+-*)*)')
 
 
 _branchKeep = [
-    #'12.0$',
-    #'13.0$',
-    #'saas-13.5$',
-    "14.0$",
-    "15.0$",
-    #"saas-15.3$",
-    'master$',
-    'master-wowl$',
+    "16.0",
+    "17.0",
+    "18.0",
+    'master',
 ]
 branchKeep = re.compile('|'.join(_branchKeep))
+
+_branchRemove = [
+    ".*-fw$",
+    ".*-((?!lpe).)*$"
+]
+branchRemove = re.compile('|'.join(_branchRemove))
 
 
 def deleteBranch(branchName, dryRun=False):
@@ -44,13 +46,10 @@ def deleteBranch(branchName, dryRun=False):
 
 def getBranches():
     branches = getRawBranches()
-    res = []
     for b in branches:
         match = gitOutput.match(b)
         if match and not match.group('starred'):
-            res.append(match.group('branchName'))
-    return res
-
+            yield match.group('branchName')
 
 def getGitCmd():
     return [
@@ -67,7 +66,7 @@ def getRawBranches():
 def execClean(opt):
     branches = getBranches()
     for b in branches:
-        if not branchKeep.match(b):
+        if branchRemove.match(b) or not branchKeep.match(b):
             dry = not opt.get('--true-run', False)
             deleteBranch(b, dry)
 
