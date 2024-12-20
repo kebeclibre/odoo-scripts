@@ -85,13 +85,18 @@ def get_odoo_run_cmd(version, args):
   parser.add_argument("-p", "--port", required=False)
   parser.add_argument("-s", "--shell", action="store_true", required=False)
   parser.add_argument("--addons-path-add", required=False)
+  parser.add_argument("--community", required=False, action="store_true")
+
   own, odoo_args = parser.parse_known_args(args)
   odoo_args = [a for a in odoo_args if a != "--"]
+
+  addons_path = ["odoo/addons", "odoo/odoo/addons"]
+  if not own.community:
+    addons_path = ["enterprise", *addons_path]
 
   odoo_cli = odoo_args
   if own.shell:
     odoo_cli.append("shell")
-  addons_path = ["enterprise", "odoo/addons", "odoo/odoo/addons"]
   for path in (own.addons_path_add or "").split(","):
     if not path:
       continue
@@ -103,7 +108,7 @@ def get_odoo_run_cmd(version, args):
     odoo_cli.extend(["-d", version])
 
   if own.port:
-    odoo_cli.append("--xmlrpc-port=" + str(NUMBER_TO_PORT[int(own.port)]))
+    odoo_cli.append("--http-port=" + str(NUMBER_TO_PORT[int(own.port)]))
 
   cmd = [odoo_bin_path] + odoo_cli
   return cmd
