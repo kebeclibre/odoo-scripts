@@ -7,9 +7,11 @@ import subprocess
 import re
 
 home = Path.home()
+upgrade_addons = ["~/devel/odoo-upgrade/upgrade-util/src","~/devel/odoo-upgrade/upgrade/migrations"]
+
 
 odooRepos = {
-  "odoo": "devel/distr0/odoo",
+  "odoo": "devel/distr0/odoo.git",
   "enterprise": "devel/distr0/enterprise"
 }
 
@@ -17,7 +19,7 @@ worktrees_root = "devel/worktrees"
 worktreepath = worktrees_root + "/{version}"
 odoo_bin_path = "odoo/odoo-bin"
 
-branch_re = re.compile("(saas-)?(\d\d)(.\d)?(.*)?")
+branch_re = re.compile(r"(saas-)?(\d\d)(.\d)?(.*)?")
 
 def get_real_branch_name(version):
   if version.startswith("master"):
@@ -86,6 +88,7 @@ def get_odoo_run_cmd(version, args):
   parser.add_argument("-s", "--shell", action="store_true", required=False)
   parser.add_argument("--addons-path-add", required=False)
   parser.add_argument("--community", required=False, action="store_true")
+  parser.add_argument("--upgrade", required=False, action="store_true")
 
   own, odoo_args = parser.parse_known_args(args)
   odoo_args = [a for a in odoo_args if a != "--"]
@@ -95,6 +98,9 @@ def get_odoo_run_cmd(version, args):
     addons_path = ["enterprise", *addons_path]
 
   odoo_cli = odoo_args
+
+  if own.upgrade:
+    odoo_cli.append("--upgrade-path=" + ",".join(upgrade_addons))
   if own.shell:
     odoo_cli.append("shell")
   for path in (own.addons_path_add or "").split(","):
@@ -108,7 +114,7 @@ def get_odoo_run_cmd(version, args):
     odoo_cli.extend(["-d", version])
 
   if own.port:
-    odoo_cli.append("--http-port=" + str(NUMBER_TO_PORT[int(own.port)]))
+    odoo_cli.append("--http-port=" + f"806{own.port}")
 
   cmd = [odoo_bin_path] + odoo_cli
   return cmd

@@ -12,19 +12,19 @@ import subprocess
 import os
 from pprint import pprint
 import re
-from docopt import docopt
+import argparse
 
 
 currentDir = os.getcwd()
 gitDir = os.path.join(currentDir, '.git')
 
-gitOutput = re.compile('(?P<starred>\*)*([\s\t])*(?P<branchName>([\w._/]+-*)*)')
+gitOutput = re.compile(r'(?P<starred>\*)*([\s\t])*(?P<branchName>([\w._/]+-*)*)')
 
 
 _branchKeep = [
-    "16.0",
-    "17.0",
-    "18.0",
+    "16.0$",
+    "17.0$",
+    "18.0$",
     'master',
 ]
 branchKeep = re.compile('|'.join(_branchKeep))
@@ -63,14 +63,15 @@ def getRawBranches():
     return subprocess.check_output(gitCmd).decode('utf-8').split('\n')
 
 
-def execClean(opt):
+def execClean(true_run=False):
     branches = getBranches()
     for b in branches:
         if branchRemove.match(b) or not branchKeep.match(b):
-            dry = not opt.get('--true-run', False)
-            deleteBranch(b, dry)
+            deleteBranch(b, true_run)
 
 
 if __name__ == '__main__':
-    opt = docopt(__doc__)
-    execClean(opt)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--true-run", required=False, action="store_true")
+    args = parser.parse_args()
+    execClean(true_run=not args.true_run)

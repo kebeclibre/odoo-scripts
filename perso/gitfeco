@@ -1,0 +1,4 @@
+#!/bin/bash
+l=$(/home/odoo/devel/scripts/perso/github_parse $@);
+read -a args <<< $l;
+git fetch "${args[0]}" "${args[1]}" && git checkout "${args[1]}"

@@ -1,0 +1,2 @@
+General;Path:%CompleteName%\n
+Video;Video:%Duration%,%Width%,%Height%\n
