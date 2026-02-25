@@ -22,16 +22,19 @@ gitOutput = re.compile(r'(?P<starred>\*)*([\s\t])*(?P<branchName>([\w._/]+-*)*)'
 
 
 _branchKeep = [
-    "16.0$",
-    "17.0$",
-    "18.0$",
-    'master',
+    r"16\.0$",
+    r"17\.0$",
+    r"18\.0$",
+    r"^saas-18\..*",
+    r"19\.0$",
+    r"^saas-19\..*",
+    r'master',
+    r'-lpe$',
 ]
 branchKeep = re.compile('|'.join(_branchKeep))
 
 _branchRemove = [
     ".*-fw$",
-    ".*-((?!lpe).)*$"
 ]
 branchRemove = re.compile('|'.join(_branchRemove))
 
