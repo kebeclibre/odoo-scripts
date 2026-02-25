@@ -1,27 +1,16 @@
 #!/usr/bin/python3
+import argparse
 import psycopg2
 from psycopg2 import sql
-from docopt import docopt
 from pprint import pprint
 import sys
 import os
 import shutil
 
-
-doc = """
-Usage:
-    postgres.py clean_db [--true-run]
-    postgres.py clean_fs [--true-run]
-    postgres.py clean_all [--true-run]
-    postgres.py clean_dumps [--true-run]
-
-Options:
-    --true-run    disable dry run
-"""
 DB_POSGRES = ['template0', 'template1', 'postgres', 'vmail']
 DB_NO_CLEAN = DB_POSGRES + ['odoo-mock%']
 
-STABLES = ['12.0', '13.0']
+STABLES = ['18.0', '19.0']
 SAAS_INCLUDE = ['saas-[0-9]{2}.[0-2]?']
 SAAS_EXCLUDE = ['saas-[1][3].[3-9]']
 
@@ -127,21 +116,26 @@ class Commands(object):
 
 
 def main():
-    opt = docopt(doc)
-    dry_run = not opt.get('--true-run', False)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command", choices=["clean_db", "clean_fs", "clean_dumps", "clean_all"])
+    parser.add_argument("--true-run", required=False, action="store_true")
+    args = parser.parse_args()
+    dry_run = not args.true_run
     if dry_run:
         pprint('DRYRUN')
     commands = Commands(dry_run)
 
-    if opt.get('clean_db'):
-        commands.clean_databases()
-    if opt.get('clean_fs'):
-        commands.clean_dir_tree('filestore')
-    if opt.get('clean_dumps'):
-        commands.clean_dir_tree('dumps')
-    if opt.get('clean_all'):
-        commands.clean_databases()
-        commands.clean_dir_tree(False)
+    command = args.command
+    match command:
+        case 'clean_db':
+            commands.clean_databases()
+        case 'clean_fs':
+            commands.clean_dir_tree('filestore')
+        case 'clean_dumps':
+            commands.clean_dir_tree('dumps')
+        case'clean_all':
+            commands.clean_databases()
+            commands.clean_dir_tree(False)
 
     sys.exit(0)
 
